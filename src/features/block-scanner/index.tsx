@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Scan, Wallet, BarChart3, Key } from 'lucide-react'
+import { Scan, Wallet, BarChart3 } from 'lucide-react'
 
 export default function BlockScanner() {
   return (
