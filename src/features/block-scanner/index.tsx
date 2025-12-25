@@ -44,9 +44,13 @@ export default function BlockScanner() {
     try {
       const result = await scanBlocks(blocks, minValue)
       console.log('Scan complete:', result)
+      if (result.walletsFound === 0) {
+        setError('Scan complete but no high-value wallets found. Try adjusting parameters or check if rate limits were hit.')
+      }
       await loadData() // Reload data after scan
-    } catch (err) {
-      setError('Scan failed. Make sure database is set up.')
+    } catch (err: any) {
+      if (err?.message?.includes('Too Many Requests') || err?.message?.includes('rate limit')) {
+        setError('Infura API rate limit exceeded. Please wait a minute or upgrade your Infura plan.')\n      } else {\n        setError('Scan failed. Make sure database is set up and API credentials are valid.')\n      }
       console.error(err)
     } finally {
       setIsScanning(false)

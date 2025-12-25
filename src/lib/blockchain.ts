@@ -5,6 +5,29 @@ const INFURA_URL = import.meta.env.VITE_BLOCKCHAIN_RPC_URL
 const ETHERSCAN_API_KEY = import.meta.env.VITE_ETHERSCAN_API_KEY
 const ETHERSCAN_API_URL = 'https://api.etherscan.io/api'
 
+// Rate limiting
+let requestCount = 0
+let lastResetTime = Date.now()
+const MAX_REQUESTS_PER_SECOND = 5
+const DELAY_BETWEEN_REQUESTS = 250 // ms
+
+async function rateLimitedDelay() {
+  const now = Date.now()
+  if (now - lastResetTime > 1000) {
+    requestCount = 0
+    lastResetTime = now
+  }
+  
+  if (requestCount >= MAX_REQUESTS_PER_SECOND) {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    requestCount = 0
+    lastResetTime = Date.now()
+  }
+  
+  requestCount++
+  await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_REQUESTS))
+}
+
 // Initialize provider
 export const provider = new ethers.JsonRpcProvider(INFURA_URL)
 
@@ -37,8 +60,13 @@ export interface WalletBalance {
  */
 export async function getLatestBlockNumber(): Promise<number> {
   try {
+    await rateLimitedDelay()
     return await provider.getBlockNumber()
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === 'BAD_DATA' || error?.message?.includes('Too Many Requests')) {
+      console.warn('Rate limit hit, using fallback block number')
+      return 21000000 // Fallback recent block number
+    }
     console.error('Error getting latest block:', error)
     throw new Error('Failed to get latest block number')
   }
@@ -49,6 +77,7 @@ export async function getLatestBlockNumber(): Promise<number> {
  */
 export async function getBlock(blockNumber: number): Promise<BlockData | null> {
   try {
+    await rateLimitedDelay()
     const block = await provider.getBlock(blockNumber, true)
     if (!block) return null
 
@@ -58,7 +87,11 @@ export async function getBlock(blockNumber: number): Promise<BlockData | null> {
       timestamp: block.timestamp,
       transactions: block.transactions as string[],
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === 'BAD_DATA' || error?.message?.includes('Too Many Requests')) {
+      console.warn(`Rate limit hit for block ${blockNumber}, skipping`)
+      return null
+    }
     console.error(`Error getting block ${blockNumber}:`, error)
     return null
   }
@@ -69,10 +102,14 @@ export async function getBlock(blockNumber: number): Promise<BlockData | null> {
  */
 export async function getTransaction(txHash: string): Promise<TransactionData | null> {
   try {
+    await rateLimitedDelay()
     const tx = await provider.getTransaction(txHash)
     if (!tx) return null
 
+    await rateLimitedDelay()
     const receipt = await provider.getTransactionReceipt(txHash)
+    
+    await rateLimitedDelay()
     const block = await provider.getBlock(tx.blockNumber!)
 
     return {
@@ -85,7 +122,11 @@ export async function getTransaction(txHash: string): Promise<TransactionData | 
       gasPrice: ethers.formatUnits(tx.gasPrice || 0, 'gwei'),
       gasUsed: receipt?.gasUsed.toString() || '0',
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === 'BAD_DATA' || error?.message?.includes('Too Many Requests')) {
+      console.warn(`Rate limit hit for transaction ${txHash}, skipping`)
+      return null
+    }
     console.error(`Error getting transaction ${txHash}:`, error)
     return null
   }
@@ -96,13 +137,22 @@ export async function getTransaction(txHash: string): Promise<TransactionData | 
  */
 export async function getWalletBalance(address: string): Promise<WalletBalance> {
   try {
+    await rateLimitedDelay()
     const balance = await provider.getBalance(address)
     return {
       address,
       balance: balance.toString(),
       balanceInEth: ethers.formatEther(balance),
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === 'BAD_DATA' || error?.message?.includes('Too Many Requests')) {
+      console.warn(`Rate limit hit for balance ${address}, returning 0`)
+      return {
+        address,
+        balance: '0',
+        balanceInEth: '0',
+      }
+    }
     console.error(`Error getting balance for ${address}:`, error)
     throw new Error('Failed to get wallet balance')
   }
