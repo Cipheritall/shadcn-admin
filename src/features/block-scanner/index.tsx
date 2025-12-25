@@ -10,7 +10,7 @@ export default function BlockScanner() {
   const [blocks, setBlocks] = useState(100)
   const [minValue, setMinValue] = useState(10)
   const [wallets, setWallets] = useState<HighValueWallet[]>([])
-  const [stats, setStats] = useState({ latestBlock: 0, totalWallets: 0, totalVolume: '0' })
+  const [stats, setStats] = useState({ latestBlock: 0, totalWallets: 0, totalValue: '0', avgValue: '0' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -26,7 +26,10 @@ export default function BlockScanner() {
         getScanStatistics()
       ])
       setWallets(walletsData)
-      setStats(statsData)
+      // Get latest block from blockchain
+      const { getLatestBlockNumber } = await import('@/lib/blockchain')
+      const latestBlock = await getLatestBlockNumber()
+      setStats({ ...statsData, latestBlock })
     } catch (err) {
       setError('Failed to load data')
       console.error(err)
@@ -95,7 +98,7 @@ export default function BlockScanner() {
             <BarChart3 className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{loading ? '...' : `${parseFloat(stats.totalVolume).toFixed(2)} ETH`}</div>
+            <div className='text-2xl font-bold'>{loading ? '...' : `${parseFloat(stats.totalValue).toFixed(2)} ETH`}</div>
             <p className='text-xs text-muted-foreground'>Across all scanned wallets</p>
           </CardContent>
         </Card>

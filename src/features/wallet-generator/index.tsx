@@ -83,7 +83,7 @@ export default function WalletGenerator() {
       return
     }
     try {
-      await fundWallet(wallet.address, fundingAmount, fundingAddress, privateKey)
+      await fundWallet(wallet.id, privateKey, wallet.address, fundingAmount.toString())
       await loadWallets()
       alert('Wallet funded successfully')
     } catch (err) {
@@ -93,12 +93,12 @@ export default function WalletGenerator() {
   }
 
   const handleSendZeroTx = async (wallet: GeneratedWallet) => {
-    if (!fundingAddress || !privateKey) {
-      setError('Please configure funding wallet and private key first')
+    if (!privateKey) {
+      setError('Please configure private key first')
       return
     }
     try {
-      await sendZeroAmountTransaction(wallet.address, fundingAddress, privateKey)
+      await sendZeroAmountTransaction(privateKey, wallet.address)
       alert('Zero-amount transaction sent successfully')
     } catch (err) {
       setError('Failed to send transaction')
