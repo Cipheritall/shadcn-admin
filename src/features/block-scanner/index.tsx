@@ -1,18 +1,53 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Scan, Wallet, BarChart3 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { scanBlocks, getHighValueWallets, getScanStatistics } from '@/services/block-scanner'
+import type { HighValueWallet } from '@/lib/supabase'
 
 export default function BlockScanner() {
   const [isScanning, setIsScanning] = useState(false)
   const [blocks, setBlocks] = useState(100)
   const [minValue, setMinValue] = useState(10)
+  const [wallets, setWallets] = useState<HighValueWallet[]>([])
+  const [stats, setStats] = useState({ latestBlock: 0, totalWallets: 0, totalVolume: '0' })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleStartScan = () => {
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const [walletsData, statsData] = await Promise.all([
+        getHighValueWallets(50),
+        getScanStatistics()
+      ])
+      setWallets(walletsData)
+      setStats(statsData)
+    } catch (err) {
+      setError('Failed to load data')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStartScan = async () => {
     setIsScanning(true)
-    console.log(`Starting scan: ${blocks} blocks, min value: ${minValue} ETH`)
-    // TODO: Integrate with scanBlocks service
-    setTimeout(() => setIsScanning(false), 3000)
+    setError(null)
+    try {
+      const result = await scanBlocks(blocks, minValue)
+      console.log('Scan complete:', result)
+      await loadData() // Reload data after scan
+    } catch (err) {
+      setError('Scan failed. Make sure database is set up.')
+      console.error(err)
+    } finally {
+      setIsScanning(false)
+    }
   }
 
   const handleStopScan = () => {
@@ -38,8 +73,8 @@ export default function BlockScanner() {
             <Scan className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>18,543,210</div>
-            <p className='text-xs text-muted-foreground'>+1 block from last scan</p>
+            <div className='text-2xl font-bold'>{loading ? '...' : stats.latestBlock.toLocaleString()}</div>
+            <p className='text-xs text-muted-foreground'>Current blockchain height</p>
           </CardContent>
         </Card>
 
@@ -49,8 +84,8 @@ export default function BlockScanner() {
             <Wallet className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>24</div>
-            <p className='text-xs text-muted-foreground'>Found in last 100 blocks</p>
+            <div className='text-2xl font-bold'>{loading ? '...' : stats.totalWallets}</div>
+            <p className='text-xs text-muted-foreground'>Found in database</p>
           </CardContent>
         </Card>
 
@@ -60,11 +95,17 @@ export default function BlockScanner() {
             <BarChart3 className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>1,234.56 ETH</div>
+            <div className='text-2xl font-bold'>{loading ? '...' : `${parseFloat(stats.totalVolume).toFixed(2)} ETH`}</div>
             <p className='text-xs text-muted-foreground'>Across all scanned wallets</p>
           </CardContent>
         </Card>
       </div>
+
+      {error && (
+        <div className='rounded-lg bg-destructive/10 p-4 text-destructive'>
+          {error}
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -111,34 +152,29 @@ export default function BlockScanner() {
           <CardDescription>Wallets discovered in recent scans</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className='space-y-2'>
-            <div className='flex items-center justify-between rounded-lg border p-3'>
-              <div className='flex items-center gap-3'>
-                <Wallet className='h-5 w-5 text-muted-foreground' />
-                <div>
-                  <p className='font-mono text-sm'>0x742d35Cc6634C0532925a3b8...</p>
-                  <p className='text-xs text-muted-foreground'>Block #18,543,198</p>
+          {loading ? (
+            <div className='text-center text-muted-foreground'>Loading...</div>
+          ) : wallets.length === 0 ? (
+            <div className='text-center text-muted-foreground'>No wallets found. Run a scan to discover high-value wallets.</div>
+          ) : (
+            <div className='space-y-2'>
+              {wallets.map((wallet) => (
+                <div key={wallet.id} className='flex items-center justify-between rounded-lg border p-3'>
+                  <div className='flex items-center gap-3'>
+                    <Wallet className='h-5 w-5 text-muted-foreground' />
+                    <div>
+                      <p className='font-mono text-sm'>{wallet.address.slice(0, 10)}...{wallet.address.slice(-8)}</p>
+                      <p className='text-xs text-muted-foreground'>Block #{wallet.first_seen_block}</p>
+                    </div>
+                  </div>
+                  <div className='text-right'>
+                    <p className='font-bold'>{(parseFloat(wallet.total_value) / 1e18).toFixed(2)} ETH</p>
+                    <p className='text-xs text-muted-foreground'>{wallet.transaction_count} transactions</p>
+                  </div>
                 </div>
-              </div>
-              <div className='text-right'>
-                <p className='font-bold'>45.23 ETH</p>
-                <p className='text-xs text-muted-foreground'>2 transactions</p>
-              </div>
+              ))}
             </div>
-            <div className='flex items-center justify-between rounded-lg border p-3'>
-              <div className='flex items-center gap-3'>
-                <Wallet className='h-5 w-5 text-muted-foreground' />
-                <div>
-                  <p className='font-mono text-sm'>0x8f3Cf7ad23Cd3CaDbD9735AF...</p>
-                  <p className='text-xs text-muted-foreground'>Block #18,543,195</p>
-                </div>
-              </div>
-              <div className='text-right'>
-                <p className='font-bold'>128.45 ETH</p>
-                <p className='text-xs text-muted-foreground'>5 transactions</p>
-              </div>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

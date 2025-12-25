@@ -2,66 +2,59 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { ArrowUpDown, Users, Download } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { useState, useEffect } from 'react'
+import { getHighValueTransactions, groupReceiversBySender, getTransactionStatistics } from '@/services/transaction-tracker'
+import type { Transaction } from '@/lib/supabase'
 
 export default function TransactionTracker() {
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [receivers, setReceivers] = useState<any[]>([])
+  const [stats, setStats] = useState({ total: 0, volume: '0', uniqueReceivers: 0, average: '0' })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const [txData, receiverData, statsData] = await Promise.all([
+        getHighValueTransactions(10, 50),
+        groupReceiversBySender(1),
+        getTransactionStatistics()
+      ])
+      setTransactions(txData)
+      setReceivers(receiverData)
+      setStats(statsData)
+    } catch (err) {
+      setError('Failed to load transaction data')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleExportTransactions = () => {
-    console.log('Exporting transactions to CSV')
+    const csv = transactions.map(tx => `${tx.hash},${tx.from_address},${tx.to_address},${tx.value},${tx.timestamp}`).join('\n')
+    const blob = new Blob(['Hash,From,To,Value,Timestamp\n' + csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'transactions.csv'
+    a.click()
   }
 
   const handleExportAnalysis = () => {
-    console.log('Exporting receiver analysis')
+    const csv = receivers.map(r => `${r.receiver_address},${r.total_received},${r.transaction_count},${r.unique_senders}`).join('\n')
+    const blob = new Blob(['Receiver,Total Received,Tx Count,Unique Senders\n' + csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'receiver-analysis.csv'
+    a.click()
   }
-
-  const transactions = [
-    {
-      id: 1,
-      from: '0x742d35Cc6634C0532925a3b844BC454e4438f44e',
-      to: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
-      amount: '45.23 ETH',
-      timestamp: '2024-12-25 14:30:00',
-      blockNumber: 18543210,
-      type: 'high-value',
-    },
-    {
-      id: 2,
-      from: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
-      to: '0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889',
-      amount: '128.45 ETH',
-      timestamp: '2024-12-25 14:28:15',
-      blockNumber: 18543205,
-      type: 'high-value',
-    },
-    {
-      id: 3,
-      from: '0x742d35Cc6634C0532925a3b844BC454e4438f44e',
-      to: '0xAAAA1234567890abcdef1234567890abcdefBBBB',
-      amount: '12.67 ETH',
-      timestamp: '2024-12-25 14:25:30',
-      blockNumber: 18543198,
-      type: 'outgoing',
-    },
-  ]
-
-  const receivers = [
-    {
-      address: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
-      totalReceived: '173.68 ETH',
-      transactionCount: 12,
-      senders: 5,
-    },
-    {
-      address: '0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889',
-      totalReceived: '256.89 ETH',
-      transactionCount: 8,
-      senders: 3,
-    },
-    {
-      address: '0xAAAA1234567890abcdef1234567890abcdefBBBB',
-      totalReceived: '45.23 ETH',
-      transactionCount: 4,
-      senders: 2,
-    },
-  ]
 
   return (
     <div className='space-y-4'>
@@ -81,8 +74,8 @@ export default function TransactionTracker() {
             <ArrowUpDown className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{transactions.length}</div>
-            <p className='text-xs text-muted-foreground'>Last 24 hours</p>
+            <div className='text-2xl font-bold'>{loading ? '...' : stats.total}</div>
+            <p className='text-xs text-muted-foreground'>High-value transactions</p>
           </CardContent>
         </Card>
 
@@ -91,7 +84,7 @@ export default function TransactionTracker() {
             <CardTitle className='text-sm font-medium'>Total Volume</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>186.35 ETH</div>
+            <div className='text-2xl font-bold'>{loading ? '...' : `${(parseFloat(stats.volume) / 1e18).toFixed(2)} ETH`}</div>
             <p className='text-xs text-muted-foreground'>Tracked transactions</p>
           </CardContent>
         </Card>
@@ -102,7 +95,7 @@ export default function TransactionTracker() {
             <Users className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{receivers.length}</div>
+            <div className='text-2xl font-bold'>{loading ? '...' : stats.uniqueReceivers}</div>
             <p className='text-xs text-muted-foreground'>From tracked wallets</p>
           </CardContent>
         </Card>
@@ -112,7 +105,7 @@ export default function TransactionTracker() {
             <CardTitle className='text-sm font-medium'>Avg Transaction</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>62.12 ETH</div>
+            <div className='text-2xl font-bold'>{loading ? '...' : `${(parseFloat(stats.average) / 1e18).toFixed(2)} ETH`}</div>
             <p className='text-xs text-muted-foreground'>Average value</p>
           </CardContent>
         </Card>
@@ -132,34 +125,38 @@ export default function TransactionTracker() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className='space-y-3'>
-            {transactions.map((tx) => (
-              <div key={tx.id} className='flex items-center justify-between rounded-lg border p-4'>
-                <div className='flex-1 space-y-1'>
-                  <div className='flex items-center gap-2'>
-                    <Badge variant={tx.type === 'high-value' ? 'default' : 'secondary'}>
-                      {tx.type}
-                    </Badge>
-                    <span className='text-xs text-muted-foreground'>Block #{tx.blockNumber}</span>
+          {loading ? (
+            <div className='text-center text-muted-foreground'>Loading...</div>
+          ) : transactions.length === 0 ? (
+            <div className='text-center text-muted-foreground'>No high-value transactions found</div>
+          ) : (
+            <div className='space-y-3'>
+              {transactions.map((tx) => (
+                <div key={tx.id} className='flex items-center justify-between rounded-lg border p-4'>
+                  <div className='flex-1 space-y-1'>
+                    <div className='flex items-center gap-2'>
+                      <Badge variant='default'>high-value</Badge>
+                      <span className='text-xs text-muted-foreground'>Block #{tx.block_number}</span>
+                    </div>
+                    <div className='space-y-1 text-sm'>
+                      <p className='text-muted-foreground'>
+                        <span className='font-medium'>From:</span>{' '}
+                        <span className='font-mono'>{tx.from_address.slice(0, 10)}...{tx.from_address.slice(-8)}</span>
+                      </p>
+                      <p className='text-muted-foreground'>
+                        <span className='font-medium'>To:</span>{' '}
+                        <span className='font-mono'>{tx.to_address.slice(0, 10)}...{tx.to_address.slice(-8)}</span>
+                      </p>
+                    </div>
+                    <p className='text-xs text-muted-foreground'>{new Date(tx.timestamp).toLocaleString()}</p>
                   </div>
-                  <div className='space-y-1 text-sm'>
-                    <p className='text-muted-foreground'>
-                      <span className='font-medium'>From:</span>{' '}
-                      <span className='font-mono'>{tx.from}</span>
-                    </p>
-                    <p className='text-muted-foreground'>
-                      <span className='font-medium'>To:</span>{' '}
-                      <span className='font-mono'>{tx.to}</span>
-                    </p>
+                  <div className='text-right'>
+                    <p className='text-lg font-bold'>{(parseFloat(tx.value) / 1e18).toFixed(2)} ETH</p>
                   </div>
-                  <p className='text-xs text-muted-foreground'>{tx.timestamp}</p>
                 </div>
-                <div className='text-right'>
-                  <p className='text-lg font-bold'>{tx.amount}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -177,27 +174,33 @@ export default function TransactionTracker() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className='space-y-3'>
-            {receivers.map((receiver) => (
-              <div
-                key={receiver.address}
-                className='flex items-center justify-between rounded-lg border p-4'
-              >
-                <div className='flex-1 space-y-1'>
-                  <p className='font-mono text-sm'>{receiver.address}</p>
-                  <div className='flex items-center gap-4 text-xs text-muted-foreground'>
-                    <span>{receiver.transactionCount} transactions</span>
-                    <span>•</span>
-                    <span>From {receiver.senders} senders</span>
+          {loading ? (
+            <div className='text-center text-muted-foreground'>Loading...</div>
+          ) : receivers.length === 0 ? (
+            <div className='text-center text-muted-foreground'>No receiver data available</div>
+          ) : (
+            <div className='space-y-3'>
+              {receivers.map((receiver) => (
+                <div
+                  key={receiver.receiver_address}
+                  className='flex items-center justify-between rounded-lg border p-4'
+                >
+                  <div className='flex-1 space-y-1'>
+                    <p className='font-mono text-sm'>{receiver.receiver_address.slice(0, 10)}...{receiver.receiver_address.slice(-8)}</p>
+                    <div className='flex items-center gap-4 text-xs text-muted-foreground'>
+                      <span>{receiver.transaction_count} transactions</span>
+                      <span>•</span>
+                      <span>From {receiver.unique_senders} senders</span>
+                    </div>
+                  </div>
+                  <div className='text-right'>
+                    <p className='font-bold'>{(parseFloat(receiver.total_received) / 1e18).toFixed(2)} ETH</p>
+                    <p className='text-xs text-muted-foreground'>Total received</p>
                   </div>
                 </div>
-                <div className='text-right'>
-                  <p className='font-bold'>{receiver.totalReceived}</p>
-                  <p className='text-xs text-muted-foreground'>Total received</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -2,7 +2,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Key, Download, Copy, Send } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createGeneratedWallet, getGeneratedWallets, fundWallet, sendZeroAmountTransaction } from '@/services/wallet-generator'
+import type { GeneratedWallet } from '@/lib/supabase'
 
 export default function WalletGenerator() {
   const [prefix, setPrefix] = useState('')
@@ -12,62 +14,96 @@ export default function WalletGenerator() {
   const [privateKey, setPrivateKey] = useState('')
   const [fundingAmount, setFundingAmount] = useState(0.01)
   const [isGenerating, setIsGenerating] = useState(false)
-  
-  const [wallets] = useState([
-    {
-      id: 1,
-      address: '0xAAAA1234567890abcdef1234567890abcdefBBBB',
-      privateKey: '0x1234567890abcdef...',
-      prefix: 'AAAA',
-      suffix: 'BBBB',
-      funded: true,
-      balance: '0.05 ETH',
-      createdAt: '2024-12-25 10:30:00',
-    },
-    {
-      id: 2,
-      address: '0xCCCC9876543210fedcba9876543210fedcbaDDDD',
-      privateKey: '0xfedcba0987654321...',
-      prefix: 'CCCC',
-      suffix: 'DDDD',
-      funded: false,
-      balance: '0.00 ETH',
-      createdAt: '2024-12-25 10:32:15',
-    },
-  ])
+  const [wallets, setWallets] = useState<GeneratedWallet[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadWallets()
+  }, [])
+
+  const loadWallets = async () => {
+    try {
+      setLoading(true)
+      const data = await getGeneratedWallets()
+      setWallets(data)
+    } catch (err) {
+      setError('Failed to load wallets')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const generatedWallets = wallets
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setIsGenerating(true)
-    console.log(`Generating ${walletCount} wallet(s) with prefix: ${prefix}, suffix: ${suffix}`)
-    // TODO: Integrate with generateVanityAddress service
-    setTimeout(() => setIsGenerating(false), 2000)
+    setError(null)
+    try {
+      for (let i = 0; i < walletCount; i++) {
+        await createGeneratedWallet(prefix || undefined, suffix || undefined)
+      }
+      await loadWallets()
+    } catch (err) {
+      setError('Failed to generate wallet. This may take time for vanity addresses.')
+      console.error(err)
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handleSaveConfig = () => {
     console.log('Config saved:', { fundingAddress, fundingAmount })
+    alert('Configuration saved locally')
   }
 
   const handleExportCSV = () => {
-    console.log('Exporting wallets to CSV')
+    const csv = wallets.map(w => `${w.address},${w.prefix || ''},${w.suffix || ''},${w.balance},${w.funded}`).join('\n')
+    const blob = new Blob(['Address,Prefix,Suffix,Balance,Funded\n' + csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'generated-wallets.csv'
+    a.click()
   }
 
   const handleFundSelected = () => {
-    console.log('Funding selected wallets')
+    alert('Select wallets to fund (feature coming soon)')
   }
 
   const handleCopyAddress = (address: string) => {
     navigator.clipboard.writeText(address)
-    console.log(`Copied ${address}`)
+    alert(`Copied ${address}`)
   }
 
-  const handleFundWallet = (id: number) => {
-    console.log(`Funding wallet ${id}`)
+  const handleFundWallet = async (wallet: GeneratedWallet) => {
+    if (!fundingAddress || !privateKey) {
+      setError('Please configure funding wallet and private key first')
+      return
+    }
+    try {
+      await fundWallet(wallet.address, fundingAmount, fundingAddress, privateKey)
+      await loadWallets()
+      alert('Wallet funded successfully')
+    } catch (err) {
+      setError('Failed to fund wallet')
+      console.error(err)
+    }
   }
 
-  const handleSendZeroTx = (id: number) => {
-    console.log(`Sending 0 amount tx to wallet ${id}`)
+  const handleSendZeroTx = async (wallet: GeneratedWallet) => {
+    if (!fundingAddress || !privateKey) {
+      setError('Please configure funding wallet and private key first')
+      return
+    }
+    try {
+      await sendZeroAmountTransaction(wallet.address, fundingAddress, privateKey)
+      alert('Zero-amount transaction sent successfully')
+    } catch (err) {
+      setError('Failed to send transaction')
+      console.error(err)
+    }
   }
 
   return (
@@ -81,6 +117,12 @@ export default function WalletGenerator() {
         </div>
       </div>
 
+      {error && (
+        <div className='rounded-lg bg-destructive/10 p-4 text-destructive'>
+          {error}
+        </div>
+      )}
+
       <div className='grid gap-4 md:grid-cols-3'>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
@@ -88,9 +130,9 @@ export default function WalletGenerator() {
             <Key className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{generatedWallets.length}</div>
+            <div className='text-2xl font-bold'>{loading ? '...' : generatedWallets.length}</div>
             <p className='text-xs text-muted-foreground'>
-              {generatedWallets.filter((w) => w.funded).length} funded
+              {loading ? '...' : generatedWallets.filter((w) => w.funded).length} funded
             </p>
           </CardContent>
         </Card>
@@ -227,46 +269,51 @@ export default function WalletGenerator() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className='space-y-3'>
-            {generatedWallets.map((wallet) => (
-              <div
-                key={wallet.id}
-                className='flex items-center justify-between rounded-lg border p-4'
-              >
-                <div className='flex-1 space-y-1'>
-                  <div className='flex items-center gap-2'>
-                    <p className='font-mono text-sm'>{wallet.address}</p>
-                    <Button variant='ghost' size='sm' onClick={() => handleCopyAddress(wallet.address)}>
-                      <Copy className='h-3 w-3' />
-                    </Button>
+          {loading ? (
+            <div className='text-center text-muted-foreground'>Loading...</div>
+          ) : generatedWallets.length === 0 ? (
+            <div className='text-center text-muted-foreground'>No wallets generated yet. Generate some above!</div>
+          ) : (
+            <div className='space-y-3'>
+              {generatedWallets.map((wallet) => (
+                <div
+                  key={wallet.id}
+                  className='flex items-center justify-between rounded-lg border p-4'
+                >
+                  <div className='flex-1 space-y-1'>
+                    <div className='flex items-center gap-2'>
+                      <p className='font-mono text-sm'>{wallet.address}</p>
+                      <Button variant='ghost' size='sm' onClick={() => handleCopyAddress(wallet.address)}>
+                        <Copy className='h-3 w-3' />
+                      </Button>
+                    </div>
+                    <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+                      {wallet.prefix && <span>Prefix: {wallet.prefix}</span>}
+                      {wallet.suffix && <span>Suffix: {wallet.suffix}</span>}
+                      {(wallet.prefix || wallet.suffix) && <span>•</span>}
+                      <span>{new Date(wallet.created_at).toLocaleString()}</span>
+                    </div>
                   </div>
-                  <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-                    <span>Prefix: {wallet.prefix}</span>
-                    <span>•</span>
-                    <span>Suffix: {wallet.suffix}</span>
-                    <span>•</span>
-                    <span>{wallet.createdAt}</span>
+                  <div className='flex items-center gap-4'>
+                    <div className='text-right'>
+                      <p className='text-sm font-medium'>{wallet.balance} ETH</p>
+                      <Badge variant={wallet.funded ? 'default' : 'secondary'}>
+                        {wallet.funded ? 'Funded' : 'Not Funded'}
+                      </Badge>
+                    </div>
+                    <div className='flex gap-2'>
+                      <Button variant='outline' size='sm' title='Fund wallet' onClick={() => handleFundWallet(wallet)}>
+                        <Send className='h-4 w-4' />
+                      </Button>
+                      <Button variant='outline' size='sm' title='Send 0 amount' onClick={() => handleSendZeroTx(wallet)}>
+                        <Send className='h-4 w-4' />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className='flex items-center gap-4'>
-                  <div className='text-right'>
-                    <p className='text-sm font-medium'>{wallet.balance}</p>
-                    <Badge variant={wallet.funded ? 'default' : 'secondary'}>
-                      {wallet.funded ? 'Funded' : 'Not Funded'}
-                    </Badge>
-                  </div>
-                  <div className='flex gap-2'>
-                    <Button variant='outline' size='sm' title='Fund wallet' onClick={() => handleFundWallet(wallet.id)}>
-                      <Send className='h-4 w-4' />
-                    </Button>
-                    <Button variant='outline' size='sm' title='Send 0 amount' onClick={() => handleSendZeroTx(wallet.id)}>
-                      <Send className='h-4 w-4' />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

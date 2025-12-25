@@ -2,60 +2,63 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Eye, Plus, Trash, Download } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { getMonitoredWallets, removeMonitoredWallet, addMonitoredWallet } from '@/services/wallet-monitor'
+import type { MonitoredWallet } from '@/lib/supabase'
 
 export default function WalletMonitor() {
-  const [wallets, setWallets] = useState([
-    {
-      id: 1,
-      address: '0x742d35Cc6634C0532925a3b844BC454e4438f44e',
-      label: 'Main Trading Wallet',
-      balance: '245.67 ETH',
-      incomingTx: 12,
-      outgoingTx: 8,
-      lastActivity: '2 hours ago',
-      status: 'active',
-    },
-    {
-      id: 2,
-      address: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
-      label: 'Exchange Wallet #1',
-      balance: '1,432.89 ETH',
-      incomingTx: 45,
-      outgoingTx: 32,
-      lastActivity: '15 minutes ago',
-      status: 'active',
-    },
-    {
-      id: 3,
-      address: '0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889',
-      label: 'Cold Storage',
-      balance: '8,921.34 ETH',
-      incomingTx: 2,
-      outgoingTx: 0,
-      lastActivity: '3 days ago',
-      status: 'inactive',
-    },
-  ])
+  const [wallets, setWallets] = useState<MonitoredWallet[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleAddWallet = () => {
-    console.log('Add wallet clicked')
-    // TODO: Open dialog to add new wallet
+  useEffect(() => {
+    loadWallets()
+  }, [])
+
+  const loadWallets = async () => {
+    try {
+      setLoading(true)
+      const data = await getMonitoredWallets()
+      setWallets(data)
+    } catch (err) {
+      setError('Failed to load wallets')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAddWallet = async () => {
+    const address = prompt('Enter wallet address:')
+    const label = prompt('Enter wallet label:')
+    if (address && label) {
+      const result = await addMonitoredWallet(address, label)
+      if (result) {
+        await loadWallets()
+      } else {
+        setError('Failed to add wallet')
+      }
+    }
   }
 
   const handleExportCSV = () => {
-    console.log('Export CSV clicked')
+  const handleExportCSV = () => {
+    console.log('Exporting wallets to CSV')
     // TODO: Export wallets to CSV
   }
 
-  const handleViewWallet = (id: number) => {
+  const handleViewWallet = (id: string) => {
     console.log(`View wallet ${id}`)
     // TODO: Navigate to wallet details
   }
 
-  const handleDeleteWallet = (id: number) => {
-    setWallets(wallets.filter(w => w.id !== id))
-    console.log(`Deleted wallet ${id}`)
+  const handleDeleteWallet = async (id: string) => {
+    const success = await removeMonitoredWallet(id)
+    if (success) {
+      setWallets(wallets.filter(w => w.id !== id))
+    } else {
+      setError('Failed to delete wallet')
+    }
   }
 
   const monitoredWallets = wallets
@@ -82,10 +85,8 @@ export default function WalletMonitor() {
             <Eye className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{monitoredWallets.length}</div>
-            <p className='text-xs text-muted-foreground'>
-              {monitoredWallets.filter((w) => w.status === 'active').length} active
-            </p>
+            <div className='text-2xl font-bold'>{loading ? '...' : monitoredWallets.length}</div>
+            <p className='text-xs text-muted-foreground'>Total tracked wallets</p>
           </CardContent>
         </Card>
 
@@ -134,43 +135,43 @@ export default function WalletMonitor() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className='space-y-3'>
-            {monitoredWallets.map((wallet) => (
-              <div
-                key={wallet.id}
-                className='flex items-center justify-between rounded-lg border p-4'
-              >
-                <div className='flex-1 space-y-1'>
-                  <div className='flex items-center gap-2'>
-                    <p className='font-medium'>{wallet.label}</p>
-                    <Badge variant={wallet.status === 'active' ? 'default' : 'secondary'}>
-                      {wallet.status}
-                    </Badge>
-                  </div>
-                  <p className='font-mono text-sm text-muted-foreground'>{wallet.address}</p>
-                  <p className='text-xs text-muted-foreground'>
-                    Last activity: {wallet.lastActivity}
-                  </p>
-                </div>
-                <div className='flex items-center gap-8'>
-                  <div className='text-right'>
-                    <p className='text-sm font-medium'>{wallet.balance}</p>
+          {loading ? (
+            <div className='text-center text-muted-foreground'>Loading...</div>
+          ) : error ? (
+            <div className='text-center text-destructive'>{error}</div>
+          ) : monitoredWallets.length === 0 ? (
+            <div className='text-center text-muted-foreground'>No wallets monitored. Add a wallet to get started.</div>
+          ) : (
+            <div className='space-y-3'>
+              {monitoredWallets.map((wallet) => (
+                <div
+                  key={wallet.id}
+                  className='flex items-center justify-between rounded-lg border p-4'
+                >
+                  <div className='flex-1 space-y-1'>
+                    <div className='flex items-center gap-2'>
+                      <p className='font-medium'>{wallet.label}</p>
+                      <Badge variant='default'>Active</Badge>
+                    </div>
+                    <p className='font-mono text-sm text-muted-foreground'>{wallet.address}</p>
                     <p className='text-xs text-muted-foreground'>
-                      In: {wallet.incomingTx} | Out: {wallet.outgoingTx}
+                      Added: {new Date(wallet.created_at).toLocaleString()}
                     </p>
                   </div>
-                  <div className='flex gap-2'>
-                    <Button variant='outline' size='sm' onClick={() => handleViewWallet(wallet.id)}>
-                      <Eye className='h-4 w-4' />
-                    </Button>
-                    <Button variant='outline' size='sm' onClick={() => handleDeleteWallet(wallet.id)}>
-                      <Trash className='h-4 w-4' />
-                    </Button>
+                  <div className='flex items-center gap-8'>
+                    <div className='flex gap-2'>
+                      <Button variant='outline' size='sm' onClick={() => handleViewWallet(wallet.id)}>
+                        <Eye className='h-4 w-4' />
+                      </Button>
+                      <Button variant='outline' size='sm' onClick={() => handleDeleteWallet(wallet.id)}>
+                        <Trash className='h-4 w-4' />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
