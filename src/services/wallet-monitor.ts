@@ -9,9 +9,6 @@ export async function addMonitoredWallet(
   label: string
 ): Promise<MonitoredWallet | null> {
   try {
-    // Get current balance
-    const balance = await getWalletBalance(address)
-
     const { data, error } = await supabase
       .from('monitored_wallets')
       .insert({
@@ -103,7 +100,7 @@ export async function getWalletDetails(address: string) {
 /**
  * Update wallet balance
  */
-export async function updateWalletBalance(id: string, address: string): Promise<string | null> {
+export async function updateWalletBalance(address: string): Promise<string | null> {
   try {
     const balance = await getWalletBalance(address)
     return balance.balanceInEth
