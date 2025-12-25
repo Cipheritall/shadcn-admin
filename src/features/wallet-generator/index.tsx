@@ -13,7 +13,7 @@ export default function WalletGenerator() {
   const [fundingAmount, setFundingAmount] = useState(0.01)
   const [isGenerating, setIsGenerating] = useState(false)
   
-  const [wallets, setWallets] = useState([
+  const [wallets] = useState([
     {
       id: 1,
       address: '0xAAAA1234567890abcdef1234567890abcdefBBBB',
