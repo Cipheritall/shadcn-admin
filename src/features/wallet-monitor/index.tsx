@@ -42,7 +42,6 @@ export default function WalletMonitor() {
   }
 
   const handleExportCSV = () => {
-  const handleExportCSV = () => {
     console.log('Exporting wallets to CSV')
     // TODO: Export wallets to CSV
   }
