@@ -4,6 +4,14 @@ import { ArrowUpDown, Users, Download } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export default function TransactionTracker() {
+  const handleExportTransactions = () => {
+    console.log('Exporting transactions to CSV')
+  }
+
+  const handleExportAnalysis = () => {
+    console.log('Exporting receiver analysis')
+  }
+
   const transactions = [
     {
       id: 1,
@@ -117,7 +125,7 @@ export default function TransactionTracker() {
               <CardTitle>High-Value Transactions</CardTitle>
               <CardDescription>Recent transactions from monitored wallets</CardDescription>
             </div>
-            <Button variant='outline' size='sm'>
+            <Button variant='outline' size='sm' onClick={handleExportTransactions}>
               <Download className='mr-2 h-4 w-4' />
               Export CSV
             </Button>
@@ -162,7 +170,7 @@ export default function TransactionTracker() {
               <CardTitle>Receiver Analysis</CardTitle>
               <CardDescription>Grouped receivers by transaction volume</CardDescription>
             </div>
-            <Button variant='outline' size='sm'>
+            <Button variant='outline' size='sm' onClick={handleExportAnalysis}>
               <Download className='mr-2 h-4 w-4' />
               Export Analysis
             </Button>

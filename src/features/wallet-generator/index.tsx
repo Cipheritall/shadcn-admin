@@ -2,9 +2,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Key, Download, Copy, Send } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { useState } from 'react'
 
 export default function WalletGenerator() {
-  const generatedWallets = [
+  const [prefix, setPrefix] = useState('')
+  const [suffix, setSuffix] = useState('')
+  const [walletCount, setWalletCount] = useState(1)
+  const [fundingAddress, setFundingAddress] = useState('')
+  const [privateKey, setPrivateKey] = useState('')
+  const [fundingAmount, setFundingAmount] = useState(0.01)
+  const [isGenerating, setIsGenerating] = useState(false)
+  
+  const [wallets, setWallets] = useState([
     {
       id: 1,
       address: '0xAAAA1234567890abcdef1234567890abcdefBBBB',
@@ -25,7 +34,41 @@ export default function WalletGenerator() {
       balance: '0.00 ETH',
       createdAt: '2024-12-25 10:32:15',
     },
-  ]
+  ])
+
+  const generatedWallets = wallets
+
+  const handleGenerate = () => {
+    setIsGenerating(true)
+    console.log(`Generating ${walletCount} wallet(s) with prefix: ${prefix}, suffix: ${suffix}`)
+    // TODO: Integrate with generateVanityAddress service
+    setTimeout(() => setIsGenerating(false), 2000)
+  }
+
+  const handleSaveConfig = () => {
+    console.log('Config saved:', { fundingAddress, fundingAmount })
+  }
+
+  const handleExportCSV = () => {
+    console.log('Exporting wallets to CSV')
+  }
+
+  const handleFundSelected = () => {
+    console.log('Funding selected wallets')
+  }
+
+  const handleCopyAddress = (address: string) => {
+    navigator.clipboard.writeText(address)
+    console.log(`Copied ${address}`)
+  }
+
+  const handleFundWallet = (id: number) => {
+    console.log(`Funding wallet ${id}`)
+  }
+
+  const handleSendZeroTx = (id: number) => {
+    console.log(`Sending 0 amount tx to wallet ${id}`)
+  }
 
   return (
     <div className='space-y-4'>
@@ -87,6 +130,8 @@ export default function WalletGenerator() {
                 className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
                 placeholder='AAAA'
                 maxLength={4}
+                value={prefix}
+                onChange={(e) => setPrefix(e.target.value.toUpperCase())}
               />
             </div>
             <div className='space-y-2'>
@@ -96,6 +141,8 @@ export default function WalletGenerator() {
                 className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
                 placeholder='BBBB'
                 maxLength={4}
+                value={suffix}
+                onChange={(e) => setSuffix(e.target.value.toUpperCase())}
               />
             </div>
             <div className='space-y-2'>
@@ -104,14 +151,15 @@ export default function WalletGenerator() {
                 type='number'
                 className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
                 placeholder='1'
-                defaultValue={1}
+                value={walletCount}
+                onChange={(e) => setWalletCount(Number(e.target.value))}
                 min={1}
                 max={100}
               />
             </div>
-            <Button className='w-full'>
+            <Button className='w-full' onClick={handleGenerate} disabled={isGenerating}>
               <Key className='mr-2 h-4 w-4' />
-              Generate Wallets
+              {isGenerating ? 'Generating...' : 'Generate Wallets'}
             </Button>
           </CardContent>
         </Card>
@@ -128,6 +176,8 @@ export default function WalletGenerator() {
                 type='text'
                 className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono'
                 placeholder='0x...'
+                value={fundingAddress}
+                onChange={(e) => setFundingAddress(e.target.value)}
               />
             </div>
             <div className='space-y-2'>
@@ -136,6 +186,8 @@ export default function WalletGenerator() {
                 type='password'
                 className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono'
                 placeholder='0x...'
+                value={privateKey}
+                onChange={(e) => setPrivateKey(e.target.value)}
               />
             </div>
             <div className='space-y-2'>
@@ -145,10 +197,11 @@ export default function WalletGenerator() {
                 step='0.001'
                 className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
                 placeholder='0.01'
-                defaultValue={0.01}
+                value={fundingAmount}
+                onChange={(e) => setFundingAmount(Number(e.target.value))}
               />
             </div>
-            <Button className='w-full' variant='outline'>
+            <Button className='w-full' variant='outline' onClick={handleSaveConfig}>
               Save Configuration
             </Button>
           </CardContent>
@@ -163,11 +216,11 @@ export default function WalletGenerator() {
               <CardDescription>Manage your generated wallet addresses</CardDescription>
             </div>
             <div className='flex gap-2'>
-              <Button variant='outline' size='sm'>
+              <Button variant='outline' size='sm' onClick={handleExportCSV}>
                 <Download className='mr-2 h-4 w-4' />
                 Export CSV
               </Button>
-              <Button variant='outline' size='sm'>
+              <Button variant='outline' size='sm' onClick={handleFundSelected}>
                 Fund Selected
               </Button>
             </div>
@@ -183,7 +236,7 @@ export default function WalletGenerator() {
                 <div className='flex-1 space-y-1'>
                   <div className='flex items-center gap-2'>
                     <p className='font-mono text-sm'>{wallet.address}</p>
-                    <Button variant='ghost' size='sm'>
+                    <Button variant='ghost' size='sm' onClick={() => handleCopyAddress(wallet.address)}>
                       <Copy className='h-3 w-3' />
                     </Button>
                   </div>
@@ -203,10 +256,10 @@ export default function WalletGenerator() {
                     </Badge>
                   </div>
                   <div className='flex gap-2'>
-                    <Button variant='outline' size='sm' title='Fund wallet'>
+                    <Button variant='outline' size='sm' title='Fund wallet' onClick={() => handleFundWallet(wallet.id)}>
                       <Send className='h-4 w-4' />
                     </Button>
-                    <Button variant='outline' size='sm' title='Send 0 amount'>
+                    <Button variant='outline' size='sm' title='Send 0 amount' onClick={() => handleSendZeroTx(wallet.id)}>
                       <Send className='h-4 w-4' />
                     </Button>
                   </div>

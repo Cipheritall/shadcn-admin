@@ -2,9 +2,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Eye, Plus, Trash, Download } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { useState } from 'react'
 
 export default function WalletMonitor() {
-  const monitoredWallets = [
+  const [wallets, setWallets] = useState([
     {
       id: 1,
       address: '0x742d35Cc6634C0532925a3b844BC454e4438f44e',
@@ -35,7 +36,29 @@ export default function WalletMonitor() {
       lastActivity: '3 days ago',
       status: 'inactive',
     },
-  ]
+  ])
+
+  const handleAddWallet = () => {
+    console.log('Add wallet clicked')
+    // TODO: Open dialog to add new wallet
+  }
+
+  const handleExportCSV = () => {
+    console.log('Export CSV clicked')
+    // TODO: Export wallets to CSV
+  }
+
+  const handleViewWallet = (id: number) => {
+    console.log(`View wallet ${id}`)
+    // TODO: Navigate to wallet details
+  }
+
+  const handleDeleteWallet = (id: number) => {
+    setWallets(wallets.filter(w => w.id !== id))
+    console.log(`Deleted wallet ${id}`)
+  }
+
+  const monitoredWallets = wallets
 
   return (
     <div className='space-y-4'>
@@ -46,7 +69,7 @@ export default function WalletMonitor() {
             Monitor specific wallets for incoming and outgoing transactions
           </p>
         </div>
-        <Button>
+        <Button onClick={handleAddWallet}>
           <Plus className='mr-2 h-4 w-4' />
           Add Wallet
         </Button>
@@ -104,7 +127,7 @@ export default function WalletMonitor() {
               <CardTitle>Monitored Wallets</CardTitle>
               <CardDescription>Manage your monitored wallet addresses</CardDescription>
             </div>
-            <Button variant='outline' size='sm'>
+            <Button variant='outline' size='sm' onClick={handleExportCSV}>
               <Download className='mr-2 h-4 w-4' />
               Export CSV
             </Button>
@@ -137,10 +160,10 @@ export default function WalletMonitor() {
                     </p>
                   </div>
                   <div className='flex gap-2'>
-                    <Button variant='outline' size='sm'>
+                    <Button variant='outline' size='sm' onClick={() => handleViewWallet(wallet.id)}>
                       <Eye className='h-4 w-4' />
                     </Button>
-                    <Button variant='outline' size='sm'>
+                    <Button variant='outline' size='sm' onClick={() => handleDeleteWallet(wallet.id)}>
                       <Trash className='h-4 w-4' />
                     </Button>
                   </div>

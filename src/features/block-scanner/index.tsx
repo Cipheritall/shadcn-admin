@@ -1,8 +1,25 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Scan, Wallet, BarChart3 } from 'lucide-react'
+import { useState } from 'react'
 
 export default function BlockScanner() {
+  const [isScanning, setIsScanning] = useState(false)
+  const [blocks, setBlocks] = useState(100)
+  const [minValue, setMinValue] = useState(10)
+
+  const handleStartScan = () => {
+    setIsScanning(true)
+    console.log(`Starting scan: ${blocks} blocks, min value: ${minValue} ETH`)
+    // TODO: Integrate with scanBlocks service
+    setTimeout(() => setIsScanning(false), 3000)
+  }
+
+  const handleStopScan = () => {
+    setIsScanning(false)
+    console.log('Scan stopped')
+  }
+
   return (
     <div className='space-y-4'>
       <div className='flex items-center justify-between'>
@@ -62,7 +79,8 @@ export default function BlockScanner() {
                 type='number'
                 className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
                 placeholder='100'
-                defaultValue={100}
+                value={blocks}
+                onChange={(e) => setBlocks(Number(e.target.value))}
               />
             </div>
             <div className='space-y-2'>
@@ -72,16 +90,17 @@ export default function BlockScanner() {
                 step='0.01'
                 className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
                 placeholder='10'
-                defaultValue={10}
+                value={minValue}
+                onChange={(e) => setMinValue(Number(e.target.value))}
               />
             </div>
           </div>
           <div className='flex gap-2'>
-            <Button>
+            <Button onClick={handleStartScan} disabled={isScanning}>
               <Scan className='mr-2 h-4 w-4' />
-              Start Scan
+              {isScanning ? 'Scanning...' : 'Start Scan'}
             </Button>
-            <Button variant='outline'>Stop Scan</Button>
+            <Button variant='outline' onClick={handleStopScan} disabled={!isScanning}>Stop Scan</Button>
           </div>
         </CardContent>
       </Card>
