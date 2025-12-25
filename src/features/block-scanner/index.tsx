@@ -50,7 +50,10 @@ export default function BlockScanner() {
       await loadData() // Reload data after scan
     } catch (err: any) {
       if (err?.message?.includes('Too Many Requests') || err?.message?.includes('rate limit')) {
-        setError('Infura API rate limit exceeded. Please wait a minute or upgrade your Infura plan.')\n      } else {\n        setError('Scan failed. Make sure database is set up and API credentials are valid.')\n      }
+        setError('Infura API rate limit exceeded. Please wait a minute or upgrade your Infura plan.')
+      } else {
+        setError('Scan failed. Make sure database is set up and API credentials are valid.')
+      }
       console.error(err)
     } finally {
       setIsScanning(false)
