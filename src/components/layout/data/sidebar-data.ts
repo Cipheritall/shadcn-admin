@@ -21,6 +21,10 @@ import {
   AudioWaveform,
   Command,
   GalleryVerticalEnd,
+  Scan,
+  Wallet,
+  ArrowsUpFromLine,
+  Key,
 } from 'lucide-react'
 import { ClerkLogo } from '@/assets/clerk-logo'
 import { type SidebarData } from '../types'
@@ -33,9 +37,9 @@ export const sidebarData: SidebarData = {
   },
   teams: [
     {
-      name: 'Shadcn Admin',
+      name: 'Mimix',
       logo: Command,
-      plan: 'Vite + ShadcnUI',
+      plan: 'Blockchain Dashboard',
     },
     {
       name: 'Acme Inc',
@@ -50,13 +54,38 @@ export const sidebarData: SidebarData = {
   ],
   navGroups: [
     {
-      title: 'General',
+      title: 'Blockchain',
       items: [
         {
           title: 'Dashboard',
           url: '/',
           icon: LayoutDashboard,
         },
+        {
+          title: 'Block Scanner',
+          url: '/block-scanner',
+          icon: Scan,
+        },
+        {
+          title: 'Wallet Monitor',
+          url: '/wallet-monitor',
+          icon: Wallet,
+        },
+        {
+          title: 'Transaction Tracker',
+          url: '/transaction-tracker',
+          icon: ArrowsUpFromLine,
+        },
+        {
+          title: 'Wallet Generator',
+          url: '/wallet-generator',
+          icon: Key,
+        },
+      ],
+    },
+    {
+      title: 'General',
+      items: [
         {
           title: 'Tasks',
           url: '/tasks',

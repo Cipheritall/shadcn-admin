@@ -1,119 +1,96 @@
-# Shadcn Admin Dashboard
+# Mimix Dashboard
 
-Admin Dashboard UI crafted with Shadcn and Vite. Built with responsiveness and accessibility in mind.
-
-![alt text](public/images/shadcn-admin.png)
-
-[![Sponsored by Clerk](https://img.shields.io/badge/Sponsored%20by-Clerk-5b6ee1?logo=clerk)](https://go.clerk.com/GttUAaK)
-
-I've been creating dashboard UIs at work and for my personal projects. I always wanted to make a reusable collection of dashboard UI for future projects; and here it is now. While I've created a few custom components, some of the code is directly adapted from ShadcnUI examples.
-
-> This is not a starter project (template) though. I'll probably make one in the future.
+Blockchain wallet monitoring and management dashboard for tracking high-value transactions and wallet activity.
 
 ## Features
 
+### Blockchain Analysis
+- **Block Scanner**: Scan latest blocks and retrieve wallets with high-value transactions
+- **Wallet Monitor**: Monitor specific wallets for incoming and outgoing transactions
+- **Transaction Tracking**: Track receivers from wallets with high-value transactions
+- **Receiver Grouping**: Regroup receivers by wallets that sent them funds
+
+### Wallet Management
+- **Wallet Generator**: Generate wallets with specific prefix and suffix patterns
+- **Wallet Storage**: Store a list of wallets to monitor for incoming transactions
+- **Funding Wallet**: Configure and manage funding wallet with private key
+- **Wallet Funding**: Fund generated wallets from the funding wallet
+- **Zero-Amount Transactions**: Send 0 amount transactions from generated wallets
+
+### Data Export
+- **CSV Export**: Export transaction data in CSV format for further analysis
+- **Wallet Export**: Export generated wallets with their private keys in CSV format
+
+### UI Features
 - Light/dark mode
-- Responsive
-- Accessible
-- With built-in Sidebar component
+- Responsive design
+- Accessible components
+- Built-in Sidebar navigation
 - Global search command
-- 10+ pages
-- Extra custom components
 - RTL support
-
-<details>
-<summary>Customized Components (click to expand)</summary>
-
-This project uses Shadcn UI components, but some have been slightly modified for better RTL (Right-to-Left) support and other improvements. These customized components differ from the original Shadcn UI versions.
-
-If you want to update components using the Shadcn CLI (e.g., `npx shadcn@latest add <component>`), it's generally safe for non-customized components. For the listed customized ones, you may need to manually merge changes to preserve the project's modifications and avoid overwriting RTL support or other updates.
-
-> If you don't require RTL support, you can safely update the 'RTL Updated Components' via the Shadcn CLI, as these changes are primarily for RTL compatibility. The 'Modified Components' may have other customizations to consider.
-
-### Modified Components
-
-- scroll-area
-- sonner
-- separator
-
-### RTL Updated Components
-
-- alert-dialog
-- calendar
-- command
-- dialog
-- dropdown-menu
-- select
-- table
-- sheet
-- sidebar
-- switch
-
-**Notes:**
-
-- **Modified Components**: These have general updates, potentially including RTL adjustments.
-- **RTL Updated Components**: These have specific changes for RTL language support (e.g., layout, positioning).
-- For implementation details, check the source files in `src/components/ui/`.
-- All other Shadcn UI components in the project are standard and can be safely updated via the CLI.
-
-</details>
 
 ## Tech Stack
 
-**UI:** [ShadcnUI](https://ui.shadcn.com) (TailwindCSS + RadixUI)
+- **Framework**: React + TypeScript
+- **Build Tool**: Vite
+- **UI Library**: Shadcn UI
+- **Routing**: TanStack Router
+- **State Management**: Zustand
+- **Styling**: Tailwind CSS
 
-**Build Tool:** [Vite](https://vitejs.dev/)
+## Getting Started
 
-**Routing:** [TanStack Router](https://tanstack.com/router/latest)
+### Prerequisites
 
-**Type Checking:** [TypeScript](https://www.typescriptlang.org/)
+- Node.js 18+ or 20+
+- pnpm (recommended) or npm
 
-**Linting/Formatting:** [ESLint](https://eslint.org/) & [Prettier](https://prettier.io/)
-
-**Icons:** [Lucide Icons](https://lucide.dev/icons/), [Tabler Icons](https://tabler.io/icons) (Brand icons only)
-
-**Auth (partial):** [Clerk](https://go.clerk.com/GttUAaK)
-
-## Run Locally
-
-Clone the project
+### Installation
 
 ```bash
-  git clone https://github.com/satnaing/shadcn-admin.git
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Preview production build
+pnpm preview
 ```
 
-Go to the project directory
+## Project Structure
+
+```
+src/
+├── features/
+│   ├── block-scanner/      # Block scanning functionality
+│   ├── wallet-monitor/     # Wallet monitoring features
+│   ├── transaction-track/  # Transaction tracking
+│   ├── wallet-generator/   # Wallet generation tools
+│   └── data-export/        # Export functionality
+├── components/             # Reusable UI components
+├── routes/                 # Application routes
+├── stores/                 # State management
+├── lib/                    # Utilities and helpers
+└── styles/                 # Global styles
+```
+
+## Development
 
 ```bash
-  cd shadcn-admin
+# Run linter
+pnpm lint
+
+# Format code
+pnpm format
+
+# Check formatting
+pnpm format:check
 ```
-
-Install dependencies
-
-```bash
-  pnpm install
-```
-
-Start the server
-
-```bash
-  pnpm run dev
-```
-
-## Sponsoring this project ❤️
-
-If you find this project helpful or use this in your own work, consider [sponsoring me](https://github.com/sponsors/satnaing) to support development and maintenance. You can [buy me a coffee](https://buymeacoffee.com/satnaing) as well. Don’t worry, every penny helps. Thank you! 🙏
-
-For questions or sponsorship inquiries, feel free to reach out at [satnaingdev@gmail.com](mailto:satnaingdev@gmail.com).
-
-### Current Sponsor
-
-- [Clerk](https://go.clerk.com/GttUAaK) - authentication and user management for the modern web
-
-## Author
-
-Crafted with 🤍 by [@satnaing](https://github.com/satnaing)
 
 ## License
 
-Licensed under the [MIT License](https://choosealicense.com/licenses/mit/)
+MIT License - see LICENSE file for details

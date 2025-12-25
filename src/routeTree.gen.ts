@@ -12,6 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ClerkRouteRouteImport } from './routes/clerk/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedWalletMonitorRouteImport } from './routes/_authenticated/wallet-monitor'
+import { Route as AuthenticatedWalletGeneratorRouteImport } from './routes/_authenticated/wallet-generator'
+import { Route as AuthenticatedTransactionTrackerRouteImport } from './routes/_authenticated/transaction-tracker'
+import { Route as AuthenticatedBlockScannerRouteImport } from './routes/_authenticated/block-scanner'
 import { Route as errors503RouteImport } from './routes/(errors)/503'
 import { Route as errors500RouteImport } from './routes/(errors)/500'
 import { Route as errors404RouteImport } from './routes/(errors)/404'
@@ -54,6 +58,30 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedWalletMonitorRoute =
+  AuthenticatedWalletMonitorRouteImport.update({
+    id: '/wallet-monitor',
+    path: '/wallet-monitor',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedWalletGeneratorRoute =
+  AuthenticatedWalletGeneratorRouteImport.update({
+    id: '/wallet-generator',
+    path: '/wallet-generator',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTransactionTrackerRoute =
+  AuthenticatedTransactionTrackerRouteImport.update({
+    id: '/transaction-tracker',
+    path: '/transaction-tracker',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBlockScannerRoute =
+  AuthenticatedBlockScannerRouteImport.update({
+    id: '/block-scanner',
+    path: '/block-scanner',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const errors503Route = errors503RouteImport.update({
   id: '/(errors)/503',
   path: '/503',
@@ -210,6 +238,10 @@ export interface FileRoutesByFullPath {
   '/404': typeof errors404Route
   '/500': typeof errors500Route
   '/503': typeof errors503Route
+  '/block-scanner': typeof AuthenticatedBlockScannerRoute
+  '/transaction-tracker': typeof AuthenticatedTransactionTrackerRoute
+  '/wallet-generator': typeof AuthenticatedWalletGeneratorRoute
+  '/wallet-monitor': typeof AuthenticatedWalletMonitorRoute
   '/': typeof AuthenticatedIndexRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
@@ -238,6 +270,10 @@ export interface FileRoutesByTo {
   '/404': typeof errors404Route
   '/500': typeof errors500Route
   '/503': typeof errors503Route
+  '/block-scanner': typeof AuthenticatedBlockScannerRoute
+  '/transaction-tracker': typeof AuthenticatedTransactionTrackerRoute
+  '/wallet-generator': typeof AuthenticatedWalletGeneratorRoute
+  '/wallet-monitor': typeof AuthenticatedWalletMonitorRoute
   '/': typeof AuthenticatedIndexRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
@@ -271,6 +307,10 @@ export interface FileRoutesById {
   '/(errors)/404': typeof errors404Route
   '/(errors)/500': typeof errors500Route
   '/(errors)/503': typeof errors503Route
+  '/_authenticated/block-scanner': typeof AuthenticatedBlockScannerRoute
+  '/_authenticated/transaction-tracker': typeof AuthenticatedTransactionTrackerRoute
+  '/_authenticated/wallet-generator': typeof AuthenticatedWalletGeneratorRoute
+  '/_authenticated/wallet-monitor': typeof AuthenticatedWalletMonitorRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
@@ -302,6 +342,10 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
+    | '/block-scanner'
+    | '/transaction-tracker'
+    | '/wallet-generator'
+    | '/wallet-monitor'
     | '/'
     | '/errors/$error'
     | '/settings/account'
@@ -330,6 +374,10 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
+    | '/block-scanner'
+    | '/transaction-tracker'
+    | '/wallet-generator'
+    | '/wallet-monitor'
     | '/'
     | '/errors/$error'
     | '/settings/account'
@@ -362,6 +410,10 @@ export interface FileRouteTypes {
     | '/(errors)/404'
     | '/(errors)/500'
     | '/(errors)/503'
+    | '/_authenticated/block-scanner'
+    | '/_authenticated/transaction-tracker'
+    | '/_authenticated/wallet-generator'
+    | '/_authenticated/wallet-monitor'
     | '/_authenticated/'
     | '/_authenticated/errors/$error'
     | '/_authenticated/settings/account'
@@ -415,6 +467,34 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/wallet-monitor': {
+      id: '/_authenticated/wallet-monitor'
+      path: '/wallet-monitor'
+      fullPath: '/wallet-monitor'
+      preLoaderRoute: typeof AuthenticatedWalletMonitorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/wallet-generator': {
+      id: '/_authenticated/wallet-generator'
+      path: '/wallet-generator'
+      fullPath: '/wallet-generator'
+      preLoaderRoute: typeof AuthenticatedWalletGeneratorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/transaction-tracker': {
+      id: '/_authenticated/transaction-tracker'
+      path: '/transaction-tracker'
+      fullPath: '/transaction-tracker'
+      preLoaderRoute: typeof AuthenticatedTransactionTrackerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/block-scanner': {
+      id: '/_authenticated/block-scanner'
+      path: '/block-scanner'
+      fullPath: '/block-scanner'
+      preLoaderRoute: typeof AuthenticatedBlockScannerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/(errors)/503': {
@@ -634,6 +714,10 @@ const AuthenticatedSettingsRouteRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRouteRoute: typeof AuthenticatedSettingsRouteRouteWithChildren
+  AuthenticatedBlockScannerRoute: typeof AuthenticatedBlockScannerRoute
+  AuthenticatedTransactionTrackerRoute: typeof AuthenticatedTransactionTrackerRoute
+  AuthenticatedWalletGeneratorRoute: typeof AuthenticatedWalletGeneratorRoute
+  AuthenticatedWalletMonitorRoute: typeof AuthenticatedWalletMonitorRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedErrorsErrorRoute: typeof AuthenticatedErrorsErrorRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
@@ -645,6 +729,10 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRouteRoute: AuthenticatedSettingsRouteRouteWithChildren,
+  AuthenticatedBlockScannerRoute: AuthenticatedBlockScannerRoute,
+  AuthenticatedTransactionTrackerRoute: AuthenticatedTransactionTrackerRoute,
+  AuthenticatedWalletGeneratorRoute: AuthenticatedWalletGeneratorRoute,
+  AuthenticatedWalletMonitorRoute: AuthenticatedWalletMonitorRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedErrorsErrorRoute: AuthenticatedErrorsErrorRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,

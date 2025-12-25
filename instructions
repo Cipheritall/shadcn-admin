@@ -1,0 +1,13 @@
+# Mimix Dashboard App
+Mimix is a blockchain app, that offer :
+- the ability to scan a number of latest blocks, and retreive wallets with high value transactions,
+- the ability to monitor specific wallets for incoming and outgoing transactions,
+- the ability to get receivers from each wallet that have high value transactions.
+- the ability to regroup receivers by wallets that sent them funds.
+- the ability to export data in CSV format for further analysis.
+- the ability generate wallets with a specific prefix and suffix.
+- the ability to store a list of wallets to monitor for incomming transactions
+- the ability to store a funding wallet, with private key
+- the ability to fund generated wallets from the funding wallet.
+- the ability to send 0 amount  from the generated wallets to a specific wallet.
+- the ability to export generated wallets with their private keys in CSV format.
